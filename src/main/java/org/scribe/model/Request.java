@@ -32,6 +32,7 @@ public class Request
   private String charset;
   private byte[] bytePayload = null;
   private boolean connectionKeepAlive = false;
+  private boolean followRedirects = true;
   private Long connectTimeout = null;
   private Long readTimeout = null;
 
@@ -82,6 +83,7 @@ public class Request
     {
       System.setProperty("http.keepAlive", connectionKeepAlive ? "true" : "false");
       connection = (HttpURLConnection) new URL(completeUrl).openConnection();
+      connection.setInstanceFollowRedirects(followRedirects);
     }
   }
 
@@ -235,14 +237,22 @@ public class Request
   }
 
   /**
-   * Returns the URL without the port and the query string part.
+   * Returns the URL without the default port and the query string part.
    * 
    * @return the OAuth-sanitized URL
    */
   public String getSanitizedUrl()
   {
-    return url.replaceAll("\\?.*", "").replace("\\:\\d{4}", "");
-  }
+	 if(url.startsWith("http://") && (url.endsWith(":80") || url.contains(":80/"))){
+	   return url.replaceAll("\\?.*", "").replaceAll(":80", "");
+	 }
+	 else  if(url.startsWith("https://") && (url.endsWith(":443") || url.contains(":443/"))){
+	   return url.replaceAll("\\?.*", "").replaceAll(":443", "");
+	 }
+	 else{
+	   return url.replaceAll("\\?.*", "");
+	 }
+   }
 
   /**
    * Returns the body of the request
@@ -349,6 +359,19 @@ public class Request
   public void setConnectionKeepAlive(boolean connectionKeepAlive)
   {
     this.connectionKeepAlive = connectionKeepAlive;
+  }
+
+  /**
+   * Sets whether the underlying Http Connection follows redirects or not.
+   *
+   * Defaults to true (follow redirects)
+   *
+   * @see http://docs.oracle.com/javase/6/docs/api/java/net/HttpURLConnection.html#setInstanceFollowRedirects(boolean)
+   * @param followRedirects
+   */
+  public void setFollowRedirects(boolean followRedirects)
+  {
+    this.followRedirects = followRedirects;
   }
 
   /*
